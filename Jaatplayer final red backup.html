@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Krish</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. CORE STYLES --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #050505;
+            /* Red & Grey Background */
+            background-image: radial-gradient(circle at 10% 10%, #312f2f 0%, transparent 40%), 
+                              radial-gradient(circle at 10% 80%, #000000 0%, transparent 40%);
+            background-attachment: fixed; color: rgb(250, 250, 250); height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+        }
+        .app-content { flex: 1; overflow-y: auto; padding: 20px 20px 140px 20px; }
+        .view-section { display: block; animation: fadeIn 0.4s ease; }
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity:0.4; } 50% { opacity:0.8; } }
+
+        /* --- 2. HEADER & TOP BUTTONS --- */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .greeting { font-size: 24px; font-weight: bold; }
+        .header-icons i { margin-left: 15px; font-size: 20px; }
+        
+        .filter-row { display: flex; gap: 10px; margin-bottom: 30px; }
+        .filter-pill {
+            background: rgba(255,255,255,0.1); padding: 8px 18px; border-radius: 20px;
+            font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .filter-pill.active {
+            background: #b91d1d; color: white; transform: scale(1.15); /* Red for Top Buttons */
+            box-shadow: 0 0 15px rgba(185, 29, 29, 0.6); border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- 3. LISTS --- */
+        .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; display: block;}
+        .horizontal-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 30px; scrollbar-width: none; }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
+        .music-card { min-width: 140px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: transform 0.1s; }
+        .music-card:active { transform: scale(0.95); }
+        .card-img { width: 140px; height: 140px; background: #333; border-radius: 4px; object-fit: cover; }
+        .card-title { color: #fff; font-size: 13px; font-weight: 600; }
+        .card-desc { color: #b3b3b3; font-size: 11px; }
+
+        /* Library Folders */
+        .lib-folders { display: flex; gap: 15px; margin-bottom: 25px; }
+        .lib-folder {
+            flex: 1; background: rgba(255, 255, 255, 0.05); padding: 15px;
+            border-radius: 20px; text-align: center; cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .lib-folder i { font-size: 24px; margin-bottom: 5px; }
+        .lib-folder span { font-size: 13px; font-weight: 600; color: #ccc; }
+        .lib-folder.active {
+            background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); transform: translateY(-2px);
+        }
+        .lib-folder.active span { color: white; }
+
+        .library-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .library-item { display: flex; align-items: center; background: rgba(49, 47, 47, 0.05); padding: 10px; border-radius: 12px; cursor: pointer; }
+        .lib-img { width: 50px; height: 50px; border-radius: 8px; margin-right: 15px; object-fit: cover; }
+        .lib-info { flex: 1; }
+        .glass-btn {
+            background: rgba(40, 40, 40, 0.6); backdrop-filter: blur(20px);
+            border: 1px solid rgba(37, 36, 36, 0.15); box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.3);
+            display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;
+        }
+
+        /* --- 4. BOTTOM DOCK (Separated & Flexible) --- */
+        .bottom-dock-container {
+            position: fixed; bottom: 20px; width: 99%; height: 60px; z-index: 90;
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 20px 0 10px; pointer-events: none;
+        }
+        .glass-dock {
+            pointer-events: auto; display: flex; align-items: center; justify-content: space-between;
+            width: 285px; height: 60px; padding: 0 10px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0) 20%, rgba(252, 249, 249, 0.144) 40%, rgba(0, 0, 0, 0) 60%);
+            background-size: 200% 200%; animation: liquidFlow 8s ease infinite;
+            backdrop-filter: blur(20px); border: 1px solid rgba(54, 54, 54, 0.993);
+            box-shadow: 0 10px 40px rgb(5, 5, 5); border-radius: 40px;
+        }
+        .dock-item {
+            display: flex; align-items: center; justify-content: center;
+            color: rgb(252, 247, 247); font-size: 22px; cursor: pointer;
+            width: 75px; height: 50px; padding: 0 10px; pointer-events:auto;
+            /* 🚀 THE MAGIC TRANSITION CODE */
+            /* 🍏 Apple Smooth Slide: Fast start, very slow soft landing, NO bounce */
+transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            /* Ensure it starts visible */
+    transform: translateY(0);
+}
+
+/* Add this class when you want to HIDE the dock */
+.dock.hidden {
+    transform: translateY(120%); /* Pushed below the screen */
+}
+        
+        
+        /* === ACTIVE DOCK BUTTON (FIXED: CLEAR LIQUID GLASS) === */
+        .dock-item.active {
+            color: rgb(253, 253, 253);
+            /* Clear/White Liquid Gradient */
+            background: linear-gradient(155deg, rgba(110, 108, 108, 0.116) 50%, rgba(0, 0, 0, 0) 100%);
+            backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
+            border: 1px solid rgba(59, 57, 57, 0.788);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0), inset 0 0 10px rgba(29, 28, 28, 0);
+            transform: scale(1.20); border-radius: 25px;
+        }
+
+        .glass-search-btn {
+            pointer-events: auto; width: 90px; height: 50px; border-radius: 60px; padding: 0 10px;
+            background: rgba(31, 30, 30, 0.068); backdrop-filter: blur(15px);
+            border: 1px solid rgba(68, 66, 66, 0.993); color: white; font-size: 22px; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(7, 7, 7, 0); display: flex; align-items: center; justify-content: center;
+            position: relative; right: 5px;
+        }
+   
+
+        /* --- 5. MINI PLAYER --- */
+        @keyframes liquidFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .glass-player-container { position: fixed; bottom: 85px; left: 15px; right: 15px; z-index: 90; }
+        .glass-player {
+            background: linear-gradient(125deg, rgba(0, 0, 0, 0) 30%, rgba(172, 170, 170, 0.329) 60%, rgba(12, 12, 12, 0) 70%);
+            background-size: 200% 200%; animation: liquidFlow 8s ease infinite;
+            backdrop-filter: blur(90px); border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); height: 55px; border-radius: 32px;
+            display: flex; align-items: center; padding: 0 15px; justify-content: space-between;
+        }
+        .gp-info { display: flex; align-items: center; flex: 1; }
+        .gp-img { width: 40px; height: 40px; border-radius: 50%; margin-right: 20px; object-fit: cover;}
+        .gp-text { display: flex; flex-direction: column; justify-content: center; }
+        .gp-title { font-size: 14px; font-weight: 600; color: white; }
+        .gp-artist { font-size: 12px; color: #ddd; }
+        .gp-play-btn { background:transparent ; border: none; color: white; font-size: 28px; cursor: pointer; }
+
+        /* --- 6. MENUS --- */
+        .profile-menu {
+            position: fixed; top: 0; right: 0; width: 300px; height: 100%;
+            background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(40px);
+            border-left: 1px solid rgba(255,255,255,0.08); z-index: 200;
+            transform: translateX(100%); transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+            padding: 40px 25px; display: flex; flex-direction: column;
+        }
+        .profile-menu.open { transform: translateX(0); }
+        .profile-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
+        .close-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        .profile-pic-large { width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.1); object-fit: cover; }
+        .menu-row { padding: 18px; color: #bbb; cursor: pointer; display: flex; align-items: center; gap: 20px; transition: all 0.25s ease; border-radius: 14px; }
+        .menu-row:hover { color: white; background: rgba(255,255,255,0.06); transform: translateX(6px); }
+        .long-press-active { transform: scale(0.97); opacity: 0.8; transition: transform 0.1s; }
+
+        /* === LIQUID GLASS MENU === */
+        .liquid-glass-menu {
+            background: linear-gradient(135deg,
+                rgba(255,255,255,0.07) 0%,
+                rgba(255,255,255,0.02) 40%,
+                rgba(255,255,255,0.09) 80%,
+                rgba(255,255,255,0.03) 100%);
+            background-size: 300% 300%;
+            animation: liquidFlow 6s ease infinite;
+            backdrop-filter: blur(50px) saturate(180%);
+            -webkit-backdrop-filter: blur(50px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.45),
+                inset 0 1px 0 rgba(255,255,255,0.15),
+                inset 0 -1px 0 rgba(0,0,0,0.2);
+            border-radius: 24px;
+        }
+
+        .search-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 300;
+            display: none; flex-direction: column; padding: 20px; animation: fadeIn 0.3s;
+        }
+        .search-input { flex: 1; background: #222; border: 1px solid #333; color: white; padding: 15px; border-radius: 30px; outline: none; }
+        .close-search-btn { color: white; font-size: 24px; background: none; border: none; cursor: pointer; }
+
+        /* --- FIXED PLAYER MODAL CSS --- */
+.full-modal {
+    position: fixed; top: 100%; left: 0; width: 100%; height: 100%;
+    background: #121212; z-index: 200; transition: top 0.4s ease;
+    display: flex; flex-direction: column; padding: 40px 20px;
+    overflow: hidden;
+}
+.full-modal::before {
+    content: '';
+    position: absolute;
+    top: -20px; left: -20px; right: -20px; bottom: -20px;
+    background-image: var(--song-bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(60px) brightness(0.4) saturate(2);
+    transform: scale(1.1);
+    z-index: 0;
+    transition: background-image 0.8s ease;
+}
+.full-modal > * {
+    position: relative;
+    z-index: 1;
+}
+      .full-modal.open { top: 0; }
+        .modal-art { width: 100%; aspect-ratio: 1/1; background: #333; border-radius: 10px; margin-bottom: 30px; object-fit: cover; }
+        .like-btn { cursor: pointer; transition: 0.2s; }
+        .like-btn.liked { color: #b91d1d; text-shadow: 0 0 15px rgba(185, 29, 29, 0.6); }
+        .default-icon-box { width: 50px; height: 50px; border-radius: 8px; margin-right: 15px; background: linear-gradient(135deg, #333, #111); display: flex; align-items: center; justify-content: center; color: #555; font-size: 20px; }
+        
+        input[type="range"] {
+            width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px;
+            outline: none; -webkit-appearance: none; cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 12px; height: 12px; background: #fff;
+            border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        /* Active state for Shuffle/Repeat buttons */
+        .control-active { 
+        color: #b91d1d !important; 
+        text-shadow: 0 0 12px rgba(185, 29, 29, 0.6);
+        transform: scale(1.1);
+        }
+        
+        .app-logo img {
+        width: 24px; 
+        height: 24px;
+        object-fit: contain;
+        /* No filter needed because the image below is already white */
+        }
+        /* 🚀 GRID LAYOUT: 3 Songs Parallel */
+        #madeForYouList .card-img,
+#recentlyPlayedList .card-img,
+#favouriteTracksList .card-img {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+/* --- INTRO SCREEN STYLES --- */
+#intro-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #050505; /* Matches your main bg */
+    z-index: 9999; /* Always on top */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease-out, visibility 0.8s; /* Smooth fade out */
+}
+
+/* Container for the logo */
+.intro-logo-container {
+    position: relative;
+    width: 120px; height: 120px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 30px;
+}
+
+/* The Main Logo Circle */
+.intro-circle {
+    width: 100px; height: 100px;
+    background: linear-gradient(135deg, #b91d1d, #500000);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 30px rgba(185, 29, 29, 0.5);
+    z-index: 2;
+    animation: beat 1.2s infinite ease-in-out;
+}
+
+.intro-circle img {
+    width: 50px; height: 50px;
+    object-fit: contain;
+}
+
+/* The Ripple Effect behind the logo */
+.intro-ripple {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(185, 29, 29, 0.5);
+    opacity: 0;
+    z-index: 1;
+    animation: ripple 1.2s infinite ease-out;
+}
+
+/* Text Animation */
+.intro-title {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1s ease-out forwards;
+    animation-delay: 0.5s; /* Wait a bit before showing text */
+}
+
+/* --- ANIMATIONS --- */
+@keyframes beat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); box-shadow: 0 0 50px rgba(185, 29, 29, 0.8); }
+    100% { transform: scale(1); }
+}
+
+@keyframes ripple {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Helper Class to Hide Intro */
+.intro-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+/* --- SWIPE UP PANEL STYLES --- */
+#queue-panel {
+position: absolute;
+bottom: 0; left: 0; width: 100%; height: 70%;
+background: #1a1a1a;
+border-top-left-radius: 30px; border-top-right-radius: 30px;
+display: flex; flex-direction: column;
+transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+z-index: 210;
+box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+}
+.queue-hidden { transform: translateY(100%); }
+.queue-visible { transform: translateY(0); }
+
+.queue-header {
+display: flex; justify-content: space-between; align-items: center;
+padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+#queue-list { overflow-y: auto; flex: 1; padding: 10px 20px; scrollbar-width: none; }
+#queue-list::-webkit-scrollbar { display: none; }
+
+.queue-item {
+display: flex; align-items: center; padding: 12px 0;
+border-bottom: 1px solid rgba(255,255,255,0.03);
+cursor: pointer;
+}
+
+#queue-arrow { transition: 0.3s; cursor: pointer; }
+#queue-arrow.active { transform: rotate(180deg); }
+    </style>
+</head>
+<body>
+    <div id="intro-overlay">
+        <div class="intro-logo-container">
+            <div class="intro-circle">
+                <img src="https://img.icons8.com/ios-filled/100/ffffff/hookah.png" alt="Logo">
+            </div>
+            <div class="intro-ripple"></div>
+        </div>
+        <h1 class="intro-title">Anil Kumar</h1>
+    </div>
+    <div class="profile-menu" id="profileMenu" style="overflow-y:auto;">
+        <div class="profile-header">
+            <span class="greeting">Profile</span>
+            <button class="close-btn" onclick="toggleProfile()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Avatar + Name -->
+        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:22px;">
+            <div style="position:relative; margin-bottom:12px;">
+                <img id="profilePicDisplay" src="https://via.placeholder.com/80" class="profile-pic-large">
+                <div onclick="document.getElementById('picInput').click()" style="position:absolute; bottom:0; right:0; width:26px; height:26px; background:#b91d1d; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                    <i class="fas fa-camera" style="font-size:11px; color:white;"></i>
+                </div>
+                <input type="file" id="picInput" accept="image/*" style="display:none;" onchange="changeProfilePic(this)">
+            </div>
+            <h3 id="profileNameDisplay" style="margin:0 0 2px 0; font-size:18px; cursor:pointer;" onclick="editProfileName()">Jaat</h3>
+            <span style="color:#aaa; font-size:11px;">Tap name to edit</span>
+        </div>
+
+        <!-- Stats -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:22px; text-align:center;">
+            <div style="background:rgba(255,255,255,0.05); border-radius:14px; padding:12px 5px;">
+                <div id="statSongs" style="font-size:20px; font-weight:700; color:#b91d1d;">0</div>
+                <div style="font-size:10px; color:#aaa; margin-top:3px;">Played</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border-radius:14px; padding:12px 5px;">
+                <div id="statLiked" style="font-size:20px; font-weight:700; color:#b91d1d;">0</div>
+                <div style="font-size:10px; color:#aaa; margin-top:3px;">Liked</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border-radius:14px; padding:12px 5px;">
+                <div id="statPlaylists" style="font-size:20px; font-weight:700; color:#b91d1d;">0</div>
+                <div style="font-size:10px; color:#aaa; margin-top:3px;">Playlists</div>
+            </div>
+        </div>
+
+        <!-- Top Artist -->
+        <div style="background:rgba(255,255,255,0.04); border-radius:16px; padding:14px; margin-bottom:20px;">
+            <div style="font-size:11px; color:#aaa; margin-bottom:6px; letter-spacing:1px;">TOP ARTIST</div>
+            <div id="topArtistDisplay" style="font-size:15px; font-weight:600; color:white;">—</div>
+        </div>
+
+        <!-- All Menu Options -->
+        <div class="menu-options">
+            <div class="menu-row" onclick="editProfileName()">
+                <i class="fas fa-user-edit" style="color:#b91d1d;"></i> Edit Profile
+            </div>
+            <div class="menu-row" onclick="openSettings()">
+                <i class="fas fa-cog" style="color:#b91d1d;"></i> Settings
+            </div>
+            <div class="menu-row" onclick="clearHistory()">
+                <i class="fas fa-history" style="color:#b91d1d;"></i> Clear History
+            </div>
+            <div class="menu-row" onclick="exportData()">
+                <i class="fas fa-download" style="color:#b91d1d;"></i> Export My Data
+            </div>
+            <div class="menu-row" onclick="resetApp()" style="color:#ff4757;">
+                <i class="fas fa-trash-alt"></i> Reset App
+            </div>
+            <div class="menu-row" onclick="logOut()" style="color:#ff4757; margin-top:5px; border-top:1px solid rgba(255,255,255,0.05); padding-top:18px;">
+                <i class="fas fa-sign-out-alt"></i> Log Out
+            </div>
+        </div>
+    </div>
+
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-header">
+            <i class="fas fa-search" style="color:#aaa;"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search songs...">
+            <button class="close-search-btn" onclick="toggleSearch()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="search-results" id="searchResults" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+
+    <div class="app-content">
+        <div class="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+        <div class="app-logo">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/hookah.png" alt="Hookah">
+        </div>
+        <span class="greeting">Jaat Player</span>
+        </div>
+        <div class="header-icons"><i class="fas fa-bell"></i></div>
+        </div>
+            
+
+        <div class="filter-row">
+            <div class="filter-pill active" onclick="setFilter('all', this)">All</div>
+            <div class="filter-pill" onclick="setFilter('music', this)">Music</div>
+            <div class="filter-pill" onclick="setFilter('podcasts', this)">Podcasts</div>
+        </div>
+
+        <div id="home-view" class="view-section">
+
+            <!-- SECTION 1: Made For You -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span class="section-title" style="margin-bottom:0;">Made For You</span>
+                <span style="font-size:12px; color:#b91d1d; cursor:pointer;" onclick="init()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </span>
+            </div>
+            <div id="madeForYouList" class="horizontal-scroll" style="margin-bottom:30px;"></div>
+
+            <!-- SECTION 2: Recently Played -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span class="section-title" style="margin-bottom:0;">Recently Played</span>
+            </div>
+            <div id="recentlyPlayedList" class="horizontal-scroll" style="margin-bottom:30px;"></div>
+
+            <!-- SECTION 3: Your Favourite Tracks -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span class="section-title" style="margin-bottom:0;">Your Favourite Tracks</span>
+            </div>
+            <div id="favouriteTracksList" class="horizontal-scroll" style="margin-bottom:30px;"></div>
+
+        </div>
+
+        <div id="library-view" class="view-section hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; margin-bottom: 20px; position: relative; z-index: 10;">
+        <h2 style="margin:0;">Library</h2>
+        
+        <div onclick="togglePlaylistCreator(event)" style="cursor: pointer; width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-plus" style="color: white; font-size: 14px;"></i>
+        </div>
+
+        <div id="playlistPopup" class="hidden" style="position: absolute; right: 0; top: 50px; width: 180px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); z-index: 5000; padding: 12px; transform-origin: top right; transition: all 0.3s ease; opacity: 0; transform: scale(0.5); box-shadow: 0 10px 40px rgba(0,0,0,0.6);">
+            <div id="popupInner">
+                <div onclick="showCreateForm()" style="cursor: pointer; padding: 10px; color: white; font-size: 14px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <i class="fas fa-folder-plus" style="margin-right:8px;"></i> Create Playlist
+                </div>
+                <div onclick="toggleEditMode()" id="editLabel" style="cursor: pointer; padding: 10px; color: white; font-size: 14px; text-align: center;">
+                    <i class="fas fa-edit" style="margin-right:8px;"></i> Edit Playlist
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="folderContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px;">
+        <div class="lib-folder" id="f-liked" onclick="openLikedSongs(this)">
+            <i class="fas fa-heart" style="color: #ff4757;"></i> <span>Liked</span>
+        </div>
+        <div class="lib-folder" id="f-local" onclick="requestLocalAccess(this)">
+            <i class="fas fa-folder-open" style="color: #00eaff;"></i> <span>Downloads</span>
+        </div>
+    </div>
+    <div class="library-grid" id="libraryList"></div>
+</div>
+
+    <div class="glass-player-container">
+        <div class="glass-player" onclick="openModal()">
+            <div class="gp-info">
+                <img src="" class="gp-img" id="mini-img">
+                <div class="gp-text">
+                    <span class="gp-title" id="mini-title">Select Song</span>
+                    <span class="gp-artist" id="mini-artist">...</span>
+                </div>
+            </div>
+            <div class="gp-controls">
+                <button class="gp-play-btn" onclick="togglePlay(event)"><i class="fas fa-play" id="play-icon"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-dock-container">
+        <div class="glass-dock">
+            <div class="dock-item active" id="nav-home" onclick="switchTab('home')"><i class="fas fa-house"></i></div>
+            <div class="dock-item" id="nav-lib" onclick="switchTab('library')"><i class="fas fa-book-open"></i></div>
+            <div class="dock-item" onclick="toggleProfile()"><i class="fas fa-user-circle" style="font-size:28px;"></i></div>
+        </div>
+        <button class="glass-search-btn" onclick="toggleSearch()"><i class="fas fa-search"></i></button>
+    </div>
+
+    <div class="full-modal" id="fullPlayer">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; color:white; margin-bottom: 20px; position: relative; z-index: 999;">
+            <i class="fas fa-chevron-down" onclick="closeModal()" style="cursor:pointer; font-size:20px;"></i>
+            <span style="font-size:12px; font-weight:bold; letter-spacing:1px;">NOW PLAYING</span>
+            <i class="fas fa-ellipsis-v" onclick="toggleOptionsMenu()" style="cursor:pointer; font-size:20px; padding: 5px;"></i>
+
+                 
+            <div id="optionsMenu" class="hidden liquid-glass-menu" style="position: absolute; top: 45px; right: 0; width: 220px; z-index: 300; padding: 12px; animation: fadeIn 0.3s ease-out;">
+                <div class="menu-row" style="padding: 12px; color: rgba(255,255,255,0.9); font-size: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="downloadSong()">
+                    <i class="fas fa-download" style="color: #b91d1d;"></i> Download Song
+                </div>
+                <div class="menu-row" style="padding: 12px; color: rgba(255,255,255,0.9); font-size: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="openPlaylistSelector()"><i class="fas fa-plus-circle" style="color: #b91d1d;"></i> Add to Playlist</div>
+                <div class="menu-row" style="padding: 12px; color: rgba(255,255,255,0.9); font-size: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="addToQueueManual()"><i class="fas fa-list-ul" style="color: #b91d1d;"></i> Add to Queue</div>
+                <div class="menu-row" style="padding: 12px; color: rgba(255,255,255,0.9); font-size: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="openSubMenu('advance')"><i class="fas fa-sliders-h"></i> Advance Options</div>
+                <div class="menu-row" style="padding: 12px; color: rgba(255,255,255,0.9); font-size: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="openSubMenu('equalizer')"><i class="fas fa-wave-square"></i> Equalizer</div>
+                <div class="menu-row" style="padding: 12px; color: rgba(255,255,255,0.9); font-size: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDetails()"><i class="fas fa-info-circle"></i> Details</div>
+            </div>
+            <div id="playlistSelector" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(50px); border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); z-index: 6000; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8);">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: white; text-align: center;">Select Playlist</h3>
+                <div id="selectionList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    </div>
+                <button onclick="document.getElementById('playlistSelector').classList.add('hidden')" style="width: 100%; margin-top: 15px; background: rgba(255,255,255,0.1); border: none; color: white; padding: 10px; border-radius: 12px; cursor: pointer;">Cancel</button>
+            </div>
+        </div> 
+        <div id="centralPanel" class="hidden" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px); border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); z-index: 500; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.7); animation: fadeIn 0.3s ease-out;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 id="panelTitle" style="margin:0; font-size:18px; color:white;">Settings</h3>
+                <i class="fas fa-times" onclick="closeCentralPanel()" style="cursor:pointer; color:#aaa; font-size: 20px;"></i>
+            </div>
+            <div id="panelContent"></div>
+        </div> 
+        
+        <img src="" class="modal-art" id="modal-img" style="width: 100%; aspect-ratio: 1/1; border-radius: 20px; object-fit: cover; margin-bottom: 20px;">
+        
+        <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h2 id="modal-title" style="margin:0; font-size:22px; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Title</h2>
+                <p id="modal-artist" style="color:#aaa; margin:5px 0; font-size:16px;">Artist</p>
+            </div>
+            <i class="fas fa-heart like-btn" id="modal-heart" style="font-size:28px;" onclick="toggleLike()"></i>
+        </div>
+
+        <input type="range" id="progressBar" value="0" max="100" oninput="seekSong(this.value)" style="width:100%; cursor:pointer;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#aaa; margin-top:8px; margin-bottom:20px;">
+            <span id="currentTime">0:00</span>
+            <span id="totalDuration">0:00</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px; margin-bottom: 20px;">
+            <i class="fas fa-random" id="btn-shuffle" style="font-size:20px; color:#aaa; cursor:pointer;" onclick="toggleShuffle()"></i>
+            <i class="fas fa-step-backward" style="font-size:32px; color:white; cursor:pointer;" onclick="prevSong()"></i>
+            
+            <div onclick="togglePlay(event)" style="width:75px; height:75px; background:#fff; border-radius:50%; color:black; display:flex; align-items:center; justify-content:center; font-size:32px; cursor:pointer; box-shadow: 0 4px 15px rgba(255,255,255,0.2);">
+                <i class="fas fa-play" id="modal-play-icon"></i>
+            </div>
+            
+            <i class="fas fa-step-forward" style="font-size:32px; color:white; cursor:pointer;" onclick="nextSong()"></i>
+            <i class="fas fa-redo" id="btn-repeat" style="font-size:20px; color:#aaa; cursor:pointer;" onclick="toggleRepeat()"></i>
+        </div>
+
+        <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 40px; padding-bottom: 25px; cursor: pointer;" onclick="toggleQueue()">
+            <i class="fas fa-chevron-up" id="queue-arrow" style="font-size: 22px; color: #aaa; transition: 0.3s;"></i>
+            <p style="font-size: 10px; color: #aaa; margin-top: 5px; font-weight: bold; letter-spacing: 1px; text-align: center;">UP NEXT</p>
+        </div>
+
+        <div id="queue-panel" class="queue-hidden" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 75%; background: #161616; border-top-left-radius: 30px; border-top-right-radius: 30px; z-index: 250;">
+            <div class="queue-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
+                <span style="font-weight:bold; color:white; font-size:18px;">Playing Next</span>
+                <i class="fas fa-chevron-down" onclick="toggleQueue()" style="cursor:pointer; color:white; font-size:20px;"></i>
+            </div>
+            <div id="queue-list" style="overflow-y:auto; flex:1; padding: 10px 20px;"></div>
+        </div>
+    </div>
+    <!-- Search Song Options Menu (same style as full player) -->
+    <div id="songOptionsDock" class="hidden liquid-glass-menu" style="position:fixed; width: 220px; z-index: 9000; padding: 12px; animation: fadeIn 0.3s ease-out;">
+    <div id="dockSongInfo" style="display:flex; align-items:center; gap:10px; padding: 8px 12px 12px 12px; border-bottom:1px solid rgba(255,255,255,0.07); margin-bottom:4px;">
+        <img id="dockSongImg" src="" style="width:36px; height:36px; border-radius:8px; object-fit:cover;">
+        <div style="overflow:hidden; flex:1;">
+            <div id="dockSongTitle" style="font-size:13px; font-weight:600; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+            <div id="dockSongArtist" style="font-size:11px; color:#aaa;"></div>
+        </div>
+    </div>
+    <div class="menu-row" onclick="dockAction('play')" style="padding:12px; color:rgba(255,255,255,0.9); font-size:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+        <i class="fas fa-play-circle" style="color:#b91d1d;"></i> Play Now
+    </div>
+    <div class="menu-row" onclick="dockAction('next')" style="padding:12px; color:rgba(255,255,255,0.9); font-size:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+        <i class="fas fa-forward" style="color:#b91d1d;"></i> Play Next
+    </div>
+    <div class="menu-row" onclick="dockAction('queue')" style="padding:12px; color:rgba(255,255,255,0.9); font-size:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+        <i class="fas fa-list-ul" style="color:#b91d1d;"></i> Add to Queue
+    </div>
+    <div class="menu-row" onclick="dockAction('playlist')" style="padding:12px; color:rgba(255,255,255,0.9); font-size:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+        <i class="fas fa-plus-circle" style="color:#b91d1d;"></i> Add to Playlist
+    </div>
+    <div class="menu-row" onclick="dockAction('like')" style="padding:12px; color:rgba(255,255,255,0.9); font-size:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+        <i class="fas fa-heart" style="color:#b91d1d;"></i> Like Song
+    </div>
+</div>
+<div id="songDockOverlay" onclick="closeSongDock()" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:8999;"></div>
+    <script>
+        let audioPlayer = new Audio();
+        let isPlaying = false;
+        let currentSong = null;
+        let currentQueue = []; // Automation ke liye main queue
+        let isShuffle = false;
+        let isRepeat = false;
+        let isQueueOpen = false; // Iske niche paste karein
+        
+        // --- EQUALIZER & AUDIO NODES ---
+        let audioCtx = null;
+        let source = null;
+        let bassFilter = null;
+        let trebleFilter = null;
+
+// ============================================
+// 🏠 HOME SCREEN ENGINE
+// ============================================
+
+// Song card banana
+function makeSongCard(song) {
+    const s = JSON.stringify(song).replace(/"/g, '&quot;');
+    return `
+    <div class="music-card" onclick="selectAndPlay(${s}); generateSmartQueue(${s})" oncontextmenu="event.preventDefault(); openSongDock(${s}, this)" ontouchstart="startLongPress(${s}, this)" ontouchend="clearLongPress()">
+            <div style="position:relative;">
+                <img src="${song.thumbnail || ''}" class="card-img">
+                <div style="position:absolute; bottom:6px; right:6px; width:30px; height:30px;
+                    background:rgba(0,0,0,0.6); border-radius:50%; display:flex;
+                    align-items:center; justify-content:center;">
+                    <i class="fas fa-play" style="color:white; font-size:11px; margin-left:2px;"></i>
+                </div>
+            </div>
+            <span class="card-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${song.title}</span>
+            <span class="card-desc" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${song.artist || ''}</span>
+        </div>`;
+}
+
+// Loading placeholder cards
+function loadingCards(containerId, count=6) {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    let html = '';
+    for(let i=0; i<count; i++) {
+        html += `<div class="music-card">
+            <div style="width:140px; height:140px; background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+                border-radius:10px; animation:pulse 1.5s ease infinite;"></div>
+            <div style="height:12px; width:100px; background:rgba(255,255,255,0.05); border-radius:6px; animation:pulse 1.5s ease infinite;"></div>
+        </div>`;
+    }
+    el.innerHTML = html;
+}
+
+async function init() {
+    // Show loading skeletons
+    loadingCards('madeForYouList', 6);
+    loadingCards('recentlyPlayedList', 6);
+    loadingCards('favouriteTracksList', 6);
+
+    // --- SECTION 1: Made For You (AI) ---
+    try {
+        const res = await fetch(`${window.location.origin}/ai_recommend`);
+        const data = await res.json();
+        const mfy = document.getElementById('madeForYouList');
+        if(mfy && data.results && data.results.length) {
+            mfy.innerHTML = data.results.map(s => makeSongCard(s)).join('');
+            if(!currentSong) loadPlayerUI(data.results[0]);
+        } else if(mfy) {
+            mfy.innerHTML = '<p style="color:#aaa; font-size:13px; padding:10px;">AI Offline. Check Server.</p>';
+        }
+    } catch(e) {
+        const mfy = document.getElementById('madeForYouList');
+        if(mfy) mfy.innerHTML = '<p style="color:#aaa; font-size:13px; padding:10px;">AI Offline. Check Server.</p>';
+    }
+
+    // --- SECTION 2: Recently Played (from localStorage) ---
+    try {
+        const history = JSON.parse(localStorage.getItem('jp_history') || '[]');
+        const recentEl = document.getElementById('recentlyPlayedList');
+        if(recentEl) {
+            if(history.length > 0) {
+                recentEl.innerHTML = history.map(s => makeSongCard(s)).join('');
+            } else {
+                recentEl.innerHTML = '<p style="color:#aaa; font-size:13px; padding:10px; min-width:200px;">Play songs to see history here.</p>';
+            }
+        }
+    } catch(e) {}
+
+    // --- SECTION 3: Favourite Tracks (liked songs) ---
+    try {
+        const favEl = document.getElementById('favouriteTracksList');
+        if(favEl) {
+            if(likedSongs && likedSongs.length > 0) {
+                favEl.innerHTML = likedSongs.map(s => makeSongCard(s)).join('');
+            } else {
+                favEl.innerHTML = '<p style="color:#aaa; font-size:13px; padding:10px; min-width:200px;">Like songs to see them here.</p>';
+            }
+        }
+    } catch(e) {}
+}
+
+      // --- ADVANCED AI PLAYBACK & SIMILARITY LOGIC ---
+       async function selectAndPlay(song) {
+    const miniTitle = document.getElementById('mini-title');
+    if(miniTitle) miniTitle.innerText = "Fetching Audio...";
+
+    try {
+        const response = await fetch(`${window.location.origin}/get_url?id=${song.id || song.videoId}&artist=${encodeURIComponent(song.artist||'')}&title=${encodeURIComponent(song.title||'')}`);
+        const data = await response.json();
+
+        if (data.url) {
+            currentSong = { ...song, src: data.url };
+            audioPlayer.src = data.url;
+
+            audioPlayer.play();
+            isPlaying = true;
+            
+            loadPlayerUI(currentSong);
+            updatePlayIcons();
+            saveMemory();
+            saveHistory(currentSong);
+            updateReverbSrc();
+            
+            if(document.getElementById('searchOverlay')) 
+                document.getElementById('searchOverlay').style.display = 'none';
+        }
+    } catch (err) {
+        console.error("Audio Load Error:", err);
+    }
+}
+async function generateSmartQueue(baseSong) {
+    const qList = document.getElementById('queue-list');
+    if(qList) qList.innerHTML = '<div style="color:#aaa; font-size:12px; padding:15px; text-align:center;"><i class="fas fa-compact-disc fa-spin"></i> AI building queue...</div>';
+
+    // Turant current song ko queue mein set karo — playback na ruke
+    currentQueue = [baseSong];
+
+    try {
+        const id = encodeURIComponent(baseSong.id || baseSong.videoId || '');
+        const artist = encodeURIComponent(baseSong.artist || '');
+        const title = encodeURIComponent(baseSong.title || '');
+
+        // Smart queue from Gemini AI
+        const res = await fetch(`${window.location.origin}/smart_queue?id=${id}&artist=${artist}&title=${title}`);
+        const data = await res.json();
+        let results = data.results || [];
+
+        if(results.length === 0) {
+            // Fallback: simple artist search
+            const fb = await fetch(`${window.location.origin}/search?name=${encodeURIComponent(baseSong.artist || baseSong.title)}`);
+            const fd = await fb.json();
+            results = (fd.results || []).filter(s =>
+                (s.id || s.videoId) !== (baseSong.id || baseSong.videoId)
+            );
+        }
+
+        // Queue set karo
+        currentQueue = [baseSong, ...results];
+
+        // Queue panel render karo
+        if(qList) {
+            if(results.length === 0) {
+                qList.innerHTML = '<div style="color:#aaa; font-size:12px; padding:15px; text-align:center;">No songs found.</div>';
+                return;
+            }
+            qList.innerHTML = '';
+            results.forEach((s, idx) => {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                item.style.cssText = 'display:flex; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;';
+                item.innerHTML = `
+                    <img src="${s.thumbnail || s.img || ''}" 
+                        style="width:45px; height:45px; border-radius:8px; margin-right:15px; object-fit:cover; flex-shrink:0;"
+                        onerror="this.style.background='#333'; this.src=''">
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-size:14px; font-weight:600; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.title}</div>
+                        <div style="font-size:12px; color:#aaa; margin-top:2px;">${s.artist || ''}</div>
+                    </div>`;
+                item.onclick = () => selectAndPlay(s);
+                qList.appendChild(item);
+            });
+        }
+    } catch(err) {
+        console.log('Smart queue error:', err);
+        if(qList) qList.innerHTML = '<div style="color:#aaa; font-size:12px; padding:15px; text-align:center;">Queue load nahi hua.</div>';
+    }
+}
+
+       // --- HD AUDIO SEARCH (OuterTune Style Fix) ---
+    document.getElementById('searchInput').addEventListener('keypress', async function (e) {
+        if (e.key === 'Enter') {
+            const query = this.value;
+            const resDiv = document.getElementById('searchResults');
+            resDiv.innerHTML = `<div style="color:#aaa; font-size:14px; text-align:center; margin-top:20px;"><i class="fas fa-compact-disc fa-spin"></i> Fetching Audio...</div>`;
+            try {
+                const response = await fetch(`${window.location.origin}/search?name=${encodeURIComponent(query)}&type=music`);
+                const data = await response.json();
+                resDiv.innerHTML = '';
+                let searchResults = data.results || [];
+                searchResults.slice(0, 10).forEach(song => {
+                    const item = document.createElement('div');
+                    item.className = 'library-item';
+                    let hdThumb = (song.thumbnail || '').replace('mqdefault', 'hqdefault');
+                    item.style.cssText = "display:flex; align-items:center; padding:10px; margin-bottom:8px; background:rgba(255,255,255,0.03); border-radius:12px;";
+                    item.innerHTML = `
+                        <img src="${hdThumb}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);">
+                        <div style="flex:1; margin-left:15px; overflow:hidden;">
+                            <div style="font-size:14px; font-weight:600; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${song.title}</div>
+                            <div style="font-size:12px; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${song.artist}</div>
+                        </div>
+                        <i class="fas fa-ellipsis-v" onclick="event.stopPropagation(); openSongDock(searchResults.find(s=>(s.id||s.videoId)==='${song.id||song.videoId}'), this)" style="color:#aaa; font-size:18px; padding:10px; cursor:pointer;"></i>`;
+                    item.onclick = async (e) => {
+                        if(e.target.classList.contains('fa-ellipsis-v')) return;
+                        // Pehle play karo, queue background mein banegi
+                        selectAndPlay(song);
+                        generateSmartQueue(song); // async — background mein chalegi
+                    };
+                    resDiv.appendChild(item);
+                });
+            } catch (err) { resDiv.innerHTML = `<div style="color:#ff4757; text-align:center;">Search failed.</div>`; }
+        }
+    }); 
+    // --- INSTANT RESPONSE BUTTON LOGIC (Pentium E5300 Optimized) ---
+   // --- PRECISE PLAYBACK ENGINE (SHUFFLE & REPEAT FIX) --- [cite: 2026-03-11]
+
+// --- CLEAN PLAYBACK ENGINE ---
+
+// Queue mein current song ka index dhundo
+function getCurrentIdx() {
+    if (!currentSong || !currentQueue.length) return 0;
+    const id = currentSong.id || currentSong.videoId;
+    const idx = currentQueue.findIndex(s => (s.id || s.videoId) === id);
+    // Agar nahi mila toh 0 return karo — queue ka pehla gaana bajao
+    return idx === -1 ? 0 : idx;
+}
+
+function nextSong() {
+    if (!currentQueue.length) return;
+    const idx = getCurrentIdx();
+    let nextIdx;
+    if (isShuffle) {
+        // Shuffle: random index, current se alag
+        do { nextIdx = Math.floor(Math.random() * currentQueue.length); }
+        while (nextIdx === idx && currentQueue.length > 1);
+    } else {
+        nextIdx = (idx + 1) % currentQueue.length;
+    }
+    playFromQueue(nextIdx);
+}
+
+function prevSong() {
+    if (!currentQueue.length) return;
+    const idx = getCurrentIdx();
+    // Agar 3 second se zyada play hua hai toh same song restart karo
+    if (audioPlayer.currentTime > 3) {
+        audioPlayer.currentTime = 0;
+        return;
+    }
+    const prevIdx = (idx - 1 + currentQueue.length) % currentQueue.length;
+    playFromQueue(prevIdx);
+}
+
+function playFromQueue(idx) {
+    if (idx < 0 || idx >= currentQueue.length) return;
+    const song = currentQueue[idx];
+    // Progress reset
+    document.getElementById('progressBar').value = 0;
+    document.getElementById('currentTime').innerText = "0:00";
+    // selectAndPlay call karo — ye khud loadPlayerUI karega
+    selectAndPlay(song);
+}
+
+// Song khatam hone par kya karna hai
+audioPlayer.onended = () => {
+    if (isRepeat) {
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
+        isPlaying = true;
+        updatePlayIcons();
+    } else if (currentQueue.length > 0) {
+        nextSong();
+    } else {
+        // Queue empty hai — same song dobara bajao
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
+    }
+};
+
+      // --- UI HELPERS (Restored & Advanced) ---
+function switchTab(tabName) {
+    document.querySelectorAll('.dock-item').forEach(el => el.classList.remove('active'));
+    const homeView = document.getElementById('home-view');
+    const libView = document.getElementById('library-view');
+    if(tabName === 'home') {
+        homeView.classList.remove('hidden');
+        libView.classList.add('hidden');
+        document.getElementById('nav-home').classList.add('active');
+    } else {
+        homeView.classList.add('hidden');
+        libView.classList.remove('hidden');
+        document.getElementById('nav-lib').classList.add('active');
+    }
+}
+
+function setFilter(type, element) {
+    document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+    element.classList.add('active');
+}
+
+function toggleProfile() { 
+    const menu = document.getElementById('profileMenu');
+    if(menu) menu.classList.toggle('open'); 
+}
+
+function togglePlay(e) {
+    if(e) e.stopPropagation();
+    if(isPlaying) {
+        audioPlayer.pause();
+        if(reverbEcho) reverbEcho.pause();
+    } else {
+        audioPlayer.play();
+        if(reverbEcho) {
+            reverbEcho.currentTime = Math.max(0, audioPlayer.currentTime - (0.3 + reverbLevel * 0.1));
+            reverbEcho.play().catch(()=>{});
+        }
+    }
+    isPlaying = !isPlaying;
+    updatePlayIcons();
+}
+function updatePlayIcons() { const cls = isPlaying ? "fas fa-pause" : "fas fa-play"; document.getElementById('play-icon').className = cls; document.getElementById('modal-play-icon').className = cls; }
+
+// --- DYNAMIC GRADIENT UI ENGINE ---
+// --- DYNAMIC GRADIENT UI ENGINE ---
+function loadPlayerUI(song) {
+    let cleanTitle = song.title.length > 40 ? song.title.substring(0, 40) + "..." : song.title;
+    document.getElementById('mini-title').innerText = cleanTitle;
+    document.getElementById('modal-title').innerText = cleanTitle;
+    document.getElementById('modal-artist').innerText = song.artist || "Unknown Artist";
+    document.getElementById('mini-artist').innerText = song.artist || "Unknown Artist";
+    let hdUrl = (song.img || song.thumbnail || "").replace('mqdefault', 'hqdefault');
+    document.getElementById('mini-img').src = hdUrl;
+    document.getElementById('modal-img').src = hdUrl;
+    const heart = document.getElementById('modal-heart');
+    if(heart) heart.classList.toggle('liked', song.liked || false);
+
+    // 🎨 Dynamic background
+    const modal = document.getElementById('fullPlayer');
+    if(modal && hdUrl) modal.style.setProperty('--song-bg-image', `url('${hdUrl}')`);
+
+    // 📱 Lock Screen Media Controls
+    if('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: song.title || 'Unknown',
+            artist: song.artist || 'Unknown Artist',
+            artwork: [{ src: hdUrl, sizes: '512x512', type: 'image/jpeg' }]
+        });
+        navigator.mediaSession.setActionHandler('play', () => { audioPlayer.play(); isPlaying = true; updatePlayIcons(); });
+        navigator.mediaSession.setActionHandler('pause', () => { audioPlayer.pause(); isPlaying = false; updatePlayIcons(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => nextSong());
+        navigator.mediaSession.setActionHandler('previoustrack', () => prevSong());
+    }
+}
+function initAudioContext() {
+    // Disabled — audio pipeline se door rehna hai
+    return;
+}
+
+// Sliders Control Functions [cite: 2026-02-09]
+function updateVolume(val) {
+    audioPlayer.volume = val / 100;
+    const el = document.getElementById('volVal');
+    if(el) el.innerText = val + '%';
+}
+
+function updateSpeed(val) {
+    audioPlayer.playbackRate = parseFloat(val);
+    audioPlayer.preservesPitch = document.getElementById('pitchToggle')?.checked || false;
+    const el = document.getElementById('speedVal');
+    if(el) el.innerText = parseFloat(val).toFixed(2) + 'x';
+}
+
+function togglePitch(checked) {6
+    audioPlayer.preservesPitch = checked;
+    const thumb = document.getElementById('pitchThumb');
+    const slider = document.getElementById('pitchSlider');
+    if(thumb) thumb.style.transform = checked ? 'translateX(18px)' : 'translateX(0)';32
+    if(slider) slider.style.background = checked ? '#b91d1d' : 'rgba(255,255,255,0.1)';
+}
+
+function updateBass(val) { /* disabled */ }
+function updateTreble(val) { /* disabled */ }
+
+// ============================================
+// 🎵 REVERB — Single offset echo, volume only
+// ============================================
+let reverbEcho = null;
+let reverbLevel = 0;
+let reverbSyncInterval = null;
+
+function setReverb(val) {
+    reverbLevel = parseFloat(val);
+    const label = document.getElementById('reverbVal');
+    if(label) label.innerText = Math.round(reverbLevel * 20) + '%';
+
+    // Clear old echo completely
+    stopReverb();
+
+    if(reverbLevel <= 0 || !currentSong?.src) return;
+
+    // One echo — very low volume, plays same song
+    // Volume only increases with slider — no duplicate audio feel
+    reverbEcho = new Audio(currentSong.src);
+    reverbEcho.volume = Math.min(reverbLevel * 0.06, 0.28); // max 28% volume
+    reverbEcho.playbackRate = audioPlayer.playbackRate;
+
+    // Echo starts 0.3s BEHIND main player — it trails
+    const offset = 0.3 + (reverbLevel * 0.1); // 0.4s to 0.8s behind
+    reverbEcho.currentTime = Math.max(0, audioPlayer.currentTime - offset);
+
+    if(isPlaying) reverbEcho.play().catch(() => {});
+
+    // Keep echo in sync using interval — no stacking listeners
+    reverbSyncInterval = setInterval(() => {
+        if(!reverbEcho || !isPlaying) return;
+        const diff = audioPlayer.currentTime - reverbEcho.currentTime;
+        const target = offset;
+        // Only resync if drift is more than 0.2s off target
+        if(Math.abs(diff - target) > 0.2) {
+            reverbEcho.currentTime = Math.max(0, audioPlayer.currentTime - offset);
+        }
+        reverbEcho.playbackRate = audioPlayer.playbackRate;
+    }, 1000); // check every second
+}
+
+function stopReverb() {
+    if(reverbSyncInterval) { clearInterval(reverbSyncInterval); reverbSyncInterval = null; }
+    if(reverbEcho) { reverbEcho.pause(); reverbEcho.src = ''; reverbEcho = null; }
+}
+
+// Call this when song changes
+function updateReverbSrc() {
+    if(reverbLevel > 0) setReverb(reverbLevel);
+}
+
+function toggleReverb(enabled) {}
+function setReverbWet(val) {}
+function syncReverb() {}
+function resetEqualizer() {
+    audioPlayer.volume = 1;
+    audioPlayer.playbackRate = 1;
+    audioPlayer.preservesPitch = false;
+    // Reverb reset
+    reverbEchoes.forEach(e => { e.pause(); e.src = ''; });
+    reverbEchoes = [];
+    const panels = ['volVal','speedVal'];
+    const defaults = ['100%','1x'];
+    panels.forEach((id,i) => { const el = document.getElementById(id); if(el) el.innerText = defaults[i]; });
+    document.querySelectorAll('#panelContent input[type=range]').forEach((el,i) => {
+        el.value = i === 0 ? 100 : 1;
+    });
+    const toggle = document.getElementById('pitchToggle');
+    if(toggle) { toggle.checked = false; togglePitch(false); }
+}
+
+
+
+function toggleQueue() {
+    isQueueOpen = !isQueueOpen;
+    const panel = document.getElementById('queue-panel');
+    if(panel) isQueueOpen ? panel.classList.add('queue-visible') : panel.classList.remove('queue-visible');
+    const arrow = document.getElementById('queue-arrow');
+    if(arrow) arrow.classList.toggle('active', isQueueOpen);
+}
+// --- FINAL CENTRAL PANEL LOGIC ---
+function openSubMenu(type) {
+    document.getElementById('optionsMenu').classList.add('hidden');
+    const panel = document.getElementById('centralPanel');
+    const content = document.getElementById('panelContent');
+    const title = document.getElementById('panelTitle');
+
+    panel.classList.remove('hidden');
+
+    if (type === 'equalizer') {
+        title.innerText = "Equalizer";
+        // Sirf tab initialize karo jab gaana chal raha ho
+        if(isPlaying) initAudioContext();
+        content.innerHTML = `
+            <div style="padding: 10px 0;">
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#ccc;">Bass</span>
+                        <span id="bassVal" style="font-size:12px; color:#b91d1d; font-weight:600;">0dB</span>
+                    </div>
+                    <input type="range" min="-15" max="15" value="0" step="1"
+                        oninput="updateBass(this.value)"
+                        style="width:100%; accent-color:#b91d1d;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#ccc;">Treble</span>
+                        <span id="trebleVal" style="font-size:12px; color:#b91d1d; font-weight:600;">0dB</span>
+                    </div>
+                    <input type="range" min="-15" max="15" value="0" step="1"
+                        oninput="updateTreble(this.value)"
+                        style="width:100%; accent-color:#b91d1d;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#ccc;">Speed</span>
+                        <span id="speedVal" style="font-size:12px; color:#b91d1d; font-weight:600;">1x</span>
+                    </div>
+                    <input type="range" min="0.5" max="2" value="1" step="0.05"
+                        oninput="updateSpeed(this.value)"
+                        style="width:100%; accent-color:#b91d1d;">
+                </div>
+                <div style="margin-bottom: 22px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#ccc;"><i class="fas fa-water" style="margin-right:6px; color:#b91d1d;"></i>Reverb</span>
+                        <span id="reverbVal" style="font-size:12px; color:#b91d1d; font-weight:600;">0%</span>
+                    </div>
+                    <input type="range" min="0" max="5" value="0" step="0.1"
+                        oninput="setReverb(this.value)"
+                        style="width:100%; accent-color:#b91d1d;">
+                    <p style="font-size:11px; color:#666; margin:4px 0 0 0;">Echo / room effect</p>
+                </div>
+                    <p style="font-size:11px; color:#666; margin:4px 0 0 0;">Room / hall echo effect</p>
+                </div>
+                <button onclick="resetEqualizer()" style="width:100%; margin-top:5px; background:rgba(185,29,29,0.15); border:1px solid rgba(185,29,29,0.3); color:#b91d1d; padding:10px; border-radius:12px; cursor:pointer; font-size:13px;">
+                    <i class="fas fa-undo" style="margin-right:6px;"></i> Reset to Default
+                </button>
+            </div>`;
+    }
+    else if (type === 'advance') {
+        title.innerText = "Advance Options";
+        content.innerHTML = `
+            <div style="padding: 5px 0; display:flex; flex-direction:column; gap:5px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size:14px; color:#ccc;"><i class="fas fa-clock" style="margin-right:10px; color:#b91d1d;"></i>Sleep Timer</span>
+                    <select onchange="setSleepTimer(this.value)" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); color:white; padding:6px 10px; border-radius:10px; font-size:13px; outline:none;">
+                        <option value="0">Off</option>
+                        <option value="15">15 min</option>
+                        <option value="30">30 min</option>
+                        <option value="45">45 min</option>
+                        <option value="60">60 min</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size:14px; color:#ccc;"><i class="fas fa-share-alt" style="margin-right:10px; color:#b91d1d;"></i>Share Song</span>
+                    <button onclick="shareSong()" style="background:rgba(185,29,29,0.15); border:1px solid rgba(185,29,29,0.3); color:#b91d1d; padding:6px 14px; border-radius:10px; cursor:pointer; font-size:13px;">Share</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0;">
+                    <span style="font-size:14px; color:#ccc;"><i class="fas fa-music" style="margin-right:10px; color:#b91d1d;"></i>Audio Quality</span>
+                    <span style="font-size:12px; color:#aaa; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:8px;">Best Audio</span>
+                </div>
+            </div>`;
+    }
+    else if (type === 'playlist' || type === 'queue') {
+        title.innerText = type === 'playlist' ? "Add to Playlist" : "Add to Queue";
+        content.innerHTML = `
+            <div style="text-align:center; padding:20px;">
+                <p style="font-size:14px; margin-bottom:20px;">Gaana "${currentSong ? currentSong.title : 'Song'}" ko ${type} mein daalna hai?</p>
+                <button onclick="closeCentralPanel()" style="background:#b91d1d; color:white; border:none; padding:10px 25px; border-radius:8px; cursor:pointer;">Confirm</button>
+            </div>`;
+    }
+}
+function confirmAction(type) {
+    alert("Done! " + type + " mein add ho gaya."); // Ise baad mein functional karenge
+    closeCentralPanel();
+}
+
+    function showDetails() {
+        document.getElementById('optionsMenu').classList.add('hidden');
+        const panel = document.getElementById('centralPanel');
+        document.getElementById('panelTitle').innerText = "Song Details";
+        document.getElementById('panelContent').innerHTML = `
+            <div style="text-align:left; color:#ccc; font-size:14px; line-height:1.8;">
+                <p><strong style="color:white;">Title:</strong> ${currentSong ? currentSong.title : 'None'}</p>
+                <p><strong style="color:white;">Artist:</strong> ${currentSong ? (currentSong.artist || 'Unknown') : 'None'}</p>
+                <p><strong style="color:white;">Engine:</strong> Jaat Hybrid v3 [cite: 2026-02-09]</p>
+            </div>`;
+        panel.classList.remove('hidden');
+    }
+    function resetEqualizer() {
+    if(bassFilter) bassFilter.gain.value = 0;
+    if(trebleFilter) trebleFilter.gain.value = 0;
+    audioPlayer.playbackRate = 1;
+    const bv = document.getElementById('bassVal');
+    const tv = document.getElementById('trebleVal');
+    const sv = document.getElementById('speedVal');
+    if(bv) bv.innerText = '0dB';
+    if(tv) tv.innerText = '0dB';
+    if(sv) sv.innerText = '1x';
+    // Sliders reset karo
+    document.querySelectorAll('#panelContent input[type=range]').forEach((el, i) => {
+        el.value = i === 2 ? 1 : 0;
+    });
+}
+
+let sleepTimer = null;
+function setSleepTimer(minutes) {
+    if(sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
+    if(minutes == 0) return;
+    sleepTimer = setTimeout(() => {
+        audioPlayer.pause();
+        isPlaying = false;
+        updatePlayIcons();
+        alert('😴 Sleep Timer: Music band ho gayi!');
+    }, minutes * 60 * 1000);
+}
+
+function shareSong() {
+    if(!currentSong) return;
+    const url = `https://www.youtube.com/watch?v=${currentSong.id || currentSong.videoId}`;
+    if(navigator.share) {
+        navigator.share({ title: currentSong.title, text: currentSong.artist, url });
+    } else {
+        navigator.clipboard.writeText(url);
+        alert('Link copied to clipboard!');
+    }
+}
+function toggleShuffle() { isShuffle = !isShuffle; document.getElementById('btn-shuffle').classList.toggle('control-active', isShuffle); }
+function toggleRepeat() { isRepeat = !isRepeat; document.getElementById('btn-repeat').classList.toggle('control-active', isRepeat); }
+function seekSong(val) { audioPlayer.currentTime = audioPlayer.duration * (val / 100); }
+function openModal() { document.getElementById('fullPlayer').classList.add('open'); }
+function closeModal() { document.getElementById('fullPlayer').classList.remove('open'); }
+
+function toggleSearch() { 
+    const ov = document.getElementById('searchOverlay');
+    ov.style.display = (ov.style.display === 'flex') ? 'none' : 'flex';
+    if(ov.style.display === 'flex') document.getElementById('searchInput').focus();
+}
+
+function toggleLike() {
+    if(!currentSong) { 
+        alert("Pehle gaana play karo!"); 
+        return; 
+    }
+    currentSong.liked = !currentSong.liked;
+
+    // Liked songs list update karo
+    if(currentSong.liked) {
+        if(!likedSongs.some(s => s.id === currentSong.id)) likedSongs.push(currentSong);
+    } else {
+        likedSongs = likedSongs.filter(s => s.id !== currentSong.id);
+    }
+    
+    saveMemory();
+    // Heart icon update karo
+    const heart = document.getElementById('modal-heart');
+    if(heart) {
+        heart.style.color = currentSong.liked ? "#b91d1d" : "#ffffff";
+        heart.style.textShadow = currentSong.liked ? "0 0 15px rgba(185, 29, 29, 0.8)" : "none";
+    }
+}
+function downloadSong() {
+    if(!currentSong || !currentSong.src) { 
+        alert("Download ke liye gaana play hona zaroori hai!"); 
+        return; 
+    }
+    // Mobile aur PC dono par download trigger [cite: 2026-03-03]
+    const a = document.createElement('a');
+    a.href = currentSong.src;
+    a.download = `${currentSong.title}.m4a`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+    
+        audioPlayer.addEventListener('timeupdate', () => {
+            const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            if(!isNaN(pct)) {
+                document.getElementById('progressBar').value = pct;
+                document.getElementById('progressBar').style.background = `linear-gradient(to right, #b91d1d ${pct}%, rgba(255,255,255,0.2) ${pct}%)`;
+            }
+            let min = Math.floor(audioPlayer.currentTime / 60);
+            let sec = Math.floor(audioPlayer.currentTime % 60);
+            document.getElementById('currentTime').innerText = min + ":" + (sec < 10 ? "0" + sec : sec);
+        });
+    
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            let min = Math.floor(audioPlayer.duration / 60);
+            let sec = Math.floor(audioPlayer.duration % 60);
+            document.getElementById('totalDuration').innerText = min + ":" + (sec < 10 ? "0" + sec : sec);
+        });
+    
+        window.addEventListener('load', () => {
+        // 2 second baad intro screen gayab ho jayegi
+        setTimeout(() => {
+            const intro = document.getElementById('intro-overlay');
+            if(intro) intro.classList.add('intro-hidden');
+        }, 2000); 
+    });
+// --- MISSING CORE LOGIC ---
+function toggleOptionsMenu() {
+    const menu = document.getElementById('optionsMenu');
+    if(menu) menu.classList.toggle('hidden');
+}
+
+// Modal/Menu ke bahar click karne par band hona
+window.onclick = function(event) {
+    // Full player options menu
+    const menu = document.getElementById('optionsMenu');
+    if (menu && !event.target.closest('#optionsMenu') && !event.target.closest('.fa-ellipsis-v')) {
+        menu.classList.add('hidden');
+    }
+    // Song dock menu — sirf overlay click par band hoga
+    // (overlay ka apna onclick hai)
+}
+
+function closeCentralPanel() {
+    document.getElementById('centralPanel').classList.add('hidden');
+}
+
+let isEditMode = false;
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const label = document.getElementById('editLabel');
+    if(label) label.innerHTML = isEditMode 
+        ? `<i class="fas fa-check" style="margin-right:8px; color:#b91d1d;"></i> Done Editing`
+        : `<i class="fas fa-edit" style="margin-right:8px;"></i> Edit Playlist`;
+    
+    // Har playlist folder par delete button dikhao/chhupaao
+    document.querySelectorAll('.lib-folder').forEach(folder => {
+        // Built-in folders skip karo
+        if(folder.id === 'f-liked' || folder.id === 'f-local') return;
+        let delBtn = folder.querySelector('.del-btn');
+        if(isEditMode) {
+            if(!delBtn) {
+                delBtn = document.createElement('i');
+                delBtn.className = 'fas fa-times-circle del-btn';
+                delBtn.style.cssText = 'color:#b91d1d; font-size:16px; position:absolute; top:-6px; right:-6px;';
+                delBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    const nameEl = folder.querySelector('span');
+                    if(nameEl) {
+                        const name = nameEl.innerText;
+                        delete userPlaylists[name];
+                        saveMemory();
+                        folder.remove();
+                    }
+                };
+                folder.style.position = 'relative';
+                folder.appendChild(delBtn);
+            }
+        } else {
+            if(delBtn) delBtn.remove();
+        }
+    });
+    closePlaylistPopup();
+}
+
+function addToQueueManual() {
+    if(!currentSong) return;
+    let exists = currentQueue.some(s => (s.id || s.videoId) === (currentSong.id || currentSong.videoId));
+    if (exists) {
+        alert("Already in queue.");
+    } else {
+        currentQueue.push(currentSong);
+        generateSmartQueue(currentSong); 
+        alert("Added to Queue!");
+    }
+    toggleOptionsMenu();
+}
+function togglePlaylistCreator(event) {
+    if(event) event.stopPropagation();
+    const popup = document.getElementById('playlistPopup');
+    if(popup.classList.contains('hidden')) {
+        popup.classList.remove('hidden');
+        setTimeout(() => {
+            popup.style.opacity = "1";
+            popup.style.transform = "scale(1)";
+        }, 10);
+    } else {
+        closePlaylistPopup();
+    }
+}
+
+function showCreateForm() {
+    const popup = document.getElementById('playlistPopup');
+    const inner = document.getElementById('popupInner');
+    popup.style.width = "240px"; 
+    inner.innerHTML = `
+        <div style="padding: 5px;">
+            <p style="margin:0 0 10px 0; font-size:12px; opacity:0.7;">Playlist Name</p>
+            <input type="text" id="plName" placeholder="Enter name..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; outline: none;">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="savePlaylist()" style="flex: 1; background: #b91d1d; border: none; color: white; padding: 8px; border-radius: 8px; cursor: pointer;">Save</button>
+                <button onclick="closePlaylistPopup()" style="flex: 1; background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px; border-radius: 8px; cursor: pointer;">Cancel</button>
+            </div>
+        </div>`;
+}
+
+function closePlaylistPopup() {
+    const popup = document.getElementById('playlistPopup');
+    popup.style.opacity = "0";
+    popup.style.transform = "scale(0.5)";
+    setTimeout(() => {
+        popup.classList.add('hidden');
+        popup.style.width = "180px";
+        document.getElementById('popupInner').innerHTML = `
+            <div onclick="showCreateForm()" style="cursor: pointer; padding: 10px; color: white; font-size: 14px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <i class="fas fa-folder-plus" style="margin-right:8px;"></i> Create Playlist
+            </div>
+            <div onclick="toggleEditMode()" id="editLabel" style="cursor: pointer; padding: 10px; color: white; font-size: 14px; text-align: center;">
+                <i class="fas fa-edit" style="margin-right:8px;"></i> Edit Playlist
+            </div>`;
+    }, 300);
+}
+
+// 1. Folders ko highlight karne ka function [cite: 2026-03-04]
+function highlightFolder(el) {
+    // Sirf library folders ko target karega [cite: 2026-03-04]
+    document.querySelectorAll('.lib-folder').forEach(f => f.classList.remove('active'));
+    el.classList.add('active');
+}
+
+let likedSongs = JSON.parse(localStorage.getItem('jp_liked') || '[]');
+
+// 1. Liked list dikhana [cite: 2026-03-04]
+function openLikedSongs(el) {
+    highlightFolder(el);
+    const grid = document.getElementById('libraryList');
+    grid.innerHTML = '';
+    if(likedSongs.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; opacity:0.5; width:100%;">No liked songs.</p>';
+        return;
+    }
+    likedSongs.forEach(song => {
+        const s = JSON.stringify(song).replace(/'/g, "\\'");
+        grid.innerHTML += `<div class="library-item" onclick='selectAndPlay(${s})' oncontextmenu='event.preventDefault(); openSongDock(${s}, this)' ontouchstart='startLongPress(${s}, this)' ontouchend='clearLongPress()'>
+            <img src="${song.thumbnail || song.img || ''}" class="lib-img" onerror="this.src=''; this.style.background='#333'">
+            <div class="lib-info">
+                <div class="card-title">${song.title}</div>
+                <div class="card-desc">${song.artist || 'Unknown'}</div>
+            </div>
+            <i class="fas fa-ellipsis-v" onclick="event.stopPropagation(); openSongDock(${s}, this)" style="color:#aaa; font-size:16px; padding:10px; cursor:pointer;"></i>
+        </div>`;
+    });
+}
+
+// 2. Local Permission Fix [cite: 2026-03-04]
+async function requestLocalAccess(el) {
+    highlightFolder(el);
+    try {
+        // Sirf modern browsers par chalega, isliye alert aur fallback zaroori hai [cite: 2026-02-09]
+        const dirHandle = await window.showDirectoryPicker();
+        alert("Access Granted! Reading songs from folder...");
+    } catch (err) {
+        alert("Access Denied Or NOt Supported By Browser.");
+    }
+}
+
+// 3. Save Playlist Logic Update [cite: 2026-03-04]
+function savePlaylist() {
+    const name = document.getElementById('plName').value;
+    if(name) {
+        userPlaylists[name] = [];
+        saveMemory();
+        const folderContainer = document.getElementById('folderContainer');
+        const newFolder = document.createElement('div');
+        newFolder.className = 'lib-folder'; 
+        newFolder.innerHTML = `<i class="fas fa-music" style="color: #b91d1d;"></i> <span>${name}</span>`;
+        newFolder.onclick = function() { 
+            highlightFolder(this);
+            // Playlist ke gaane dikhana [cite: 2026-03-04]
+            const grid = document.getElementById('libraryList');
+            grid.innerHTML = userPlaylists[name].length ? '' : '<p style="text-align:center; opacity:0.5; width:100%;">Playlist empty hai.</p>';
+            userPlaylists[name].forEach(s => {
+                grid.innerHTML += `<div class="library-item" onclick='selectAndPlay(${JSON.stringify(s)})'>
+                    <img src="${s.img || s.thumbnail || ''}" class="lib-img" onerror="this.style.display='none'">
+                    <div class="lib-info">
+                        <div class="card-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.title}</div>
+                        <div class="card-desc">${s.artist || 'Unknown'}</div>
+                    </div>
+                </div>`;
+            });
+        };
+        folderContainer.appendChild(newFolder);
+        alert("Playlist '" + name + "' Created!");
+        closePlaylistPopup();
+    }
+}
+// ============================================
+// 💾 MEMORY SYSTEM — localStorage se save/load
+// ============================================
+let userPlaylists = JSON.parse(localStorage.getItem('jp_playlists') || '{}');
+
+function saveMemory() {
+    localStorage.setItem('jp_playlists', JSON.stringify(userPlaylists));
+    localStorage.setItem('jp_liked', JSON.stringify(likedSongs));
+    if(currentSong) localStorage.setItem('jp_lastSong', JSON.stringify(currentSong));
+}
+function saveHistory(song) {
+    try {
+        let history = JSON.parse(localStorage.getItem('jp_history') || '[]');
+        // Duplicate hata do
+        history = history.filter(s => (s.id || s.videoId) !== (song.id || song.videoId));
+        // Naya song pehle daalo
+        history.unshift({ 
+            id: song.id || song.videoId,
+            title: song.title, 
+            artist: song.artist, 
+            thumbnail: song.thumbnail || song.img || ''
+        });
+        // Max 20 songs
+        history = history.slice(0, 20);
+        localStorage.setItem('jp_history', JSON.stringify(history));
+    } catch(e) {}
+}
+function openPlaylistSelector() {
+    if(!currentSong) return alert("Please Play Any Song first!");
+    const selector = document.getElementById('playlistSelector');
+    const list = document.getElementById('selectionList');
+    list.innerHTML = '';
+    
+    // Bani hui playlists ko selector mein dikhana [cite: 2026-03-04]
+    Object.keys(userPlaylists).forEach(name => {
+        const div = document.createElement('div');
+        div.style.cssText = "padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; color: white; font-size: 14px;";
+        div.innerText = name;
+        div.onclick = () => {
+            userPlaylists[name].push(currentSong);
+            alert(`Song added to ${name}`);
+            selector.classList.add('hidden');
+        };
+        list.appendChild(div);
+    });
+    
+    if(Object.keys(userPlaylists).length === 0) list.innerHTML = "<p style='color:#888; text-align:center;'>Bhai pehle library mein '+' se playlist banao!</p>";
+    selector.classList.remove('hidden');
+}
+   // 🔁 Last session restore karo
+   (function restoreMemory() {
+        // Playlists restore karo
+        Object.keys(userPlaylists).forEach(name => {
+            const folderContainer = document.getElementById('folderContainer');
+            const newFolder = document.createElement('div');
+            newFolder.className = 'lib-folder';
+            newFolder.innerHTML = `<i class="fas fa-music" style="color: #b91d1d;"></i> <span>${name}</span>`;
+            newFolder.onclick = function() {
+                highlightFolder(this);
+                const grid = document.getElementById('libraryList');
+                grid.innerHTML = userPlaylists[name].length ? '' : '<p style="text-align:center; opacity:0.5; width:100%;">Playlist empty hai.</p>';
+                userPlaylists[name].forEach(s => {
+                    grid.innerHTML += `<div class="library-item" onclick='selectAndPlay(${JSON.stringify(s)})'>
+                        <img src="${s.img || s.thumbnail || ''}" class="lib-img">
+                        <div class="lib-info"><div class="card-title">${s.title}</div><div class="card-desc">${s.artist || ''}</div></div>
+                    </div>`;
+                });
+            };
+            folderContainer.appendChild(newFolder);
+        });
+
+   // Last played song mini player mein load karo
+   const last = JSON.parse(localStorage.getItem('jp_lastSong') || 'null');
+        if(last) {
+            currentSong = last;
+            loadPlayerUI(last);
+            // Mini player visible karo
+            const miniTitle = document.getElementById('mini-title');
+            if(miniTitle) miniTitle.innerText = last.title || 'Last Played';
+            const miniArtist = document.getElementById('mini-artist');
+            if(miniArtist) miniArtist.innerText = last.artist || '';
+            const miniImg = document.getElementById('mini-img');
+            if(miniImg) miniImg.src = (last.img || last.thumbnail || '').replace('mqdefault','hqdefault');
+        }     
+    })();
+// ============================================
+// 🎵 SONG OPTIONS DOCK
+// ============================================
+let dockTargetSong = null;
+let longPressTimer = null;
+let longPressSong = null;
+let longPressEl = null;
+
+function startLongPress(song, el) {
+    longPressSong = song;
+    longPressEl = el;
+    if(el) el.classList.add('long-press-active');
+    longPressTimer = setTimeout(() => {
+        if(el) el.classList.remove('long-press-active');
+        openSongDock(song, el);
+    }, 500); // 500ms long press
+}
+
+function clearLongPress() {
+    if(longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    if(longPressEl) longPressEl.classList.remove('long-press-active');
+}
+
+function openSongDock(song, triggerEl) {
+    if(!song) return;
+    dockTargetSong = song;
+    let hdThumb = (song.img || song.thumbnail || '').replace('mqdefault','hqdefault');
+    document.getElementById('dockSongImg').src = hdThumb;
+    document.getElementById('dockSongTitle').innerText = song.title || 'Unknown';
+    document.getElementById('dockSongArtist').innerText = song.artist || 'Unknown Artist';
+
+    const dock = document.getElementById('songOptionsDock');
+    dock.classList.remove('hidden');
+
+    // Position near the tapped ellipsis icon
+    if(triggerEl) {
+        const rect = triggerEl.getBoundingClientRect();
+        const dockWidth = 220;
+        let left = rect.right - dockWidth;
+        let top = rect.bottom + 8;
+        // Screen ke bahar na jaye
+        if(left < 10) left = 10;
+        if(top + 300 > window.innerHeight) top = rect.top - 310;
+        dock.style.left = left + 'px';
+        dock.style.top = top + 'px';
+    }
+
+    document.getElementById('songDockOverlay').style.display = 'block';
+}
+
+function closeSongDock() {
+    document.getElementById('songOptionsDock').classList.add('hidden');
+    document.getElementById('songDockOverlay').style.display = 'none';
+    dockTargetSong = null;
+}
+
+function dockAction(action) {
+    if(!dockTargetSong) return;
+    const song = dockTargetSong;
+    closeSongDock();
+
+    if(action === 'play') {
+        selectAndPlay(song);
+    } else if(action === 'next') {
+        // Current song ke baad queue mein daalo
+        if(currentSong) {
+            let idx = currentQueue.findIndex(s => (s.id||s.videoId) === (currentSong.id||currentSong.videoId));
+            currentQueue.splice(idx + 1, 0, song);
+        } else {
+            currentQueue.unshift(song);
+        }
+        generateSmartQueue(currentSong || song);
+        alert("Play Next mein add ho gaya!");
+    } else if(action === 'queue') {
+        let exists = currentQueue.some(s => (s.id||s.videoId) === (song.id||song.videoId));
+        if(exists) { alert("Already in queue!"); return; }
+        currentQueue.push(song);
+        generateSmartQueue(currentSong || song);
+        alert("Queue mein add ho gaya!");
+    } else if(action === 'playlist') {
+        // Temporarily set dockTargetSong as currentSong for playlist selector
+        const prev = currentSong;
+        currentSong = song;
+        openPlaylistSelector();
+        currentSong = prev;
+    } else if(action === 'like') {
+        const exists = likedSongs.some(s => (s.id||s.videoId) === (song.id||song.videoId));
+        if(exists) {
+            alert("Already in Liked Songs!");
+        } else {
+            likedSongs.push(song);
+            saveMemory();
+            alert("Liked Songs mein add ho gaya! ❤️");
+        }
+    }
+}
+// ============================================
+// 👤 PROFILE FUNCTIONS
+// ============================================
+function loadProfileStats() {
+    const history = JSON.parse(localStorage.getItem('jp_history') || '[]');
+    const el = document.getElementById('statSongs');
+    if(el) el.innerText = history.length;
+    const el2 = document.getElementById('statLiked');
+    if(el2) el2.innerText = likedSongs.length;
+    const el3 = document.getElementById('statPlaylists');
+    if(el3) el3.innerText = Object.keys(userPlaylists).length;
+
+    // Top artist from taste.json equivalent in localStorage
+    const taste = {};
+    history.forEach(s => { if(s.artist) taste[s.artist] = (taste[s.artist]||0)+1; });
+    const top = Object.entries(taste).sort((a,b)=>b[1]-a[1])[0];
+    const ta = document.getElementById('topArtistDisplay');
+    if(ta) ta.innerText = top ? `${top[0]} (${top[1]} plays)` : '—';
+
+    // Restore name and pic
+    const name = localStorage.getItem('jp_name') || 'Jaat';
+    const pic = localStorage.getItem('jp_pic') || '';
+    const nd = document.getElementById('profileNameDisplay');
+    if(nd) nd.innerText = name;
+    const pd = document.getElementById('profilePicDisplay');
+    if(pd && pic) pd.src = pic;
+}
+
+function toggleProfile() {
+    const menu = document.getElementById('profileMenu');
+    if(menu) {
+        menu.classList.toggle('open');
+        if(menu.classList.contains('open')) loadProfileStats();
+    }
+}
+
+function editProfileName() {
+    const current = document.getElementById('profileNameDisplay').innerText;
+    const newName = prompt('Enter your name:', current);
+    if(newName && newName.trim()) {
+        localStorage.setItem('jp_name', newName.trim());
+        document.getElementById('profileNameDisplay').innerText = newName.trim();
+    }
+}
+
+function changeProfilePic(input) {
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const data = e.target.result;
+        localStorage.setItem('jp_pic', data);
+        document.getElementById('profilePicDisplay').src = data;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearHistory() {
+    if(confirm('Clear all play history?')) {
+        localStorage.removeItem('jp_history');
+        loadProfileStats();
+        alert('History cleared!');
+    }
+}
+
+function exportData() {
+    const data = {
+        name: localStorage.getItem('jp_name') || 'Jaat',
+        liked: likedSongs,
+        playlists: userPlaylists,
+        history: JSON.parse(localStorage.getItem('jp_history') || '[]')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'jaatplayer_data.json';
+    a.click();
+}
+
+function resetApp() {
+    if(confirm('Reset everything? This cannot be undone.')) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+function openSettings() {
+    toggleProfile();
+    // Advance options panel open karo
+    setTimeout(() => openSubMenu('advance'), 300);
+}
+
+function logOut() {
+    if(confirm('Log out? Your data will stay saved.')) {
+        toggleProfile();
+        alert('Logged out. App restart karega.');
+        setTimeout(() => location.reload(), 500);
+    }
+}
+    init();
+</script>   
+</body>
+</html>
